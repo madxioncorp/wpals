@@ -199,9 +199,10 @@ if ( ! class_exists( 'Wpals' ) ) {
         public static function getBitly ($longurl) {
 
             $apikey = get_option('wpals_apikey');
+            $bitly_guid = get_option('wpals_bitly_guid');
             $arrval = array(
                 'long_url' => $longurl,
-                'group_guid' => 'Bobg2vKrKPj',
+                'group_guid' => $bitly_guid,
                 'domain' => 'bit.ly'
             );
             $auth = array(
