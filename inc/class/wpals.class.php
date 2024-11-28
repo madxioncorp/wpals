@@ -45,6 +45,13 @@ if ( ! class_exists( 'Wpals' ) ) {
                 );
             register_setting('wpals_options', 'wpals_apikey', $args);
 
+            $args = array(
+                'type' => 'string', 
+                'sanitize_callback' => 'sanitize_text_field',
+                'default' => NULL,
+                );
+            register_setting('wpals_options', 'wpals_bitly_guid', $args);
+
             
             add_settings_section(
                 'wpals_settings_section',
@@ -61,7 +68,14 @@ if ( ! class_exists( 'Wpals' ) ) {
 
             add_settings_field(
                 'wpals_settings_field_apikey',
-                'API KEY', 'Wpals::apikey_callback',
+                'API KEY BITLY', 'Wpals::apikey_callback',
+                'wpals_options',
+                'wpals_settings_section'
+            );
+
+            add_settings_field(
+                'wpals_settings_field_bitly_guid',
+                'Bitly Group ID', 'Wpals::bitly_guid_callback',
                 'wpals_options',
                 'wpals_settings_section'
             );
@@ -90,6 +104,16 @@ if ( ! class_exists( 'Wpals' ) ) {
             // output the field
             ?>
             <input type="text" name="wpals_apikey" value="<?php echo isset( $setting ) ? esc_attr( $setting ) : ''; ?>">
+                
+            <?php
+        }
+
+        public static function bitly_guid_callback() {
+            // get the value of the setting we've registered with register_setting()
+            $wpals_bitly_guid = get_option('wpals_bitly_guid');
+            // output the field
+            ?>
+            <input type="text" name="wpals_bitly_guid" value="<?php echo isset( $wpals_bitly_guid ) ? esc_attr( $wpals_bitly_guid ) : ''; ?>">
                 
             <?php
         }
