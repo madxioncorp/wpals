@@ -125,7 +125,7 @@ if ( ! class_exists( 'Wpals' ) ) {
                 'manage_options',
                 'wpals',
                 'Wpals::wpals_options_page_html',
-                plugins_url('wpals/images/icon-wpals-plugin.png'),
+                plugins_url('wpals/assets/icon-wpals-plugin.png'),
                 20
             );
         }
