@@ -23,7 +23,7 @@ class Wpalsbox
     public static function custom_box_html( $post ) {
         $value = get_post_meta( $post->ID, '_wpals_meta_shorten', true );
         ?>
-        <label for="wpals_shortened">Description for this field</label>
+        <label for="wpals_shortened">Shortened Link</label>
         <input type="text" name="wpals_shortened" class="components-text-control__input" value="<?php echo esc_html($value); ?>">
         
         <?php
