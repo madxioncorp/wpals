@@ -134,7 +134,7 @@ if ( ! class_exists( 'Wpals' ) ) {
                 // (sections are registered for "wporg", each field is registered to a specific section)
                 do_settings_sections( 'wpals_options' );
                 // output save settings button
-                submit_button( __( 'Save Settings', 'wpalsoption' ) );
+                submit_button( __( 'Save Settings', 'wpals' ) );
                 ?>
             </form>
             </div>
@@ -163,39 +163,7 @@ if ( ! class_exists( 'Wpals' ) ) {
 
         }
 
-        public static function fetch ($url, $method, $arrval, $auth) {
-            $ch = curl_init();
-
-            curl_setopt($ch, CURLOPT_URL,$url);
-            
-            if( $method == "POST" ) {
-                curl_setopt($ch, CURLOPT_POST, true);
-                curl_setopt($ch, CURLOPT_POSTFIELDS, 
-                    json_encode($arrval));
-            }
-            
-            if( $auth['status'] == TRUE ) {
-                curl_setopt(
-                    $ch, 
-                    CURLOPT_HTTPHEADER, 
-                    array(
-                        'Content-Type: application/json', // for define content type that is json
-                        'Authorization: Bearer '.$auth['token']
-                    )
-                );
-            }
-            
-
-            // Receive server response ...
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-            $server_output = curl_exec($ch);
-
-            curl_close($ch);
-
-            return $server_output;
-        }
-
+    
         public static function getBitly ($longurl) {
 
             $apikey = get_option('wpals_apikey');
@@ -205,23 +173,42 @@ if ( ! class_exists( 'Wpals' ) ) {
                 'group_guid' => $bitly_guid,
                 'domain' => 'bit.ly'
             );
-            $auth = array(
-                'status' => TRUE,
-                'token' => $apikey
+
+            $args = array(
+                'headers' => array(
+                    'Content-Type' => 'application/json',
+                    'Authorization' => "Bearer ".$apikey
+                ),
+                'body'    => wp_json_encode( $arrval, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES )
             );
-            $req = self::fetch("https://api-ssl.bitly.com/v4/shorten", "POST", $arrval, $auth );
-            $res = json_decode($req, true);
+            $req = wp_remote_post(esc_url_raw("https://api-ssl.bitly.com/v4/shorten"), $args );
+            $res = json_decode(wp_remote_retrieve_body($req), true);
 
             return $res['link'];
 
         }
 
         public static function tinyurl($url) {
-
-            $fp = file_get_contents ('https://www.shareaholic.com/v2/share/shorten_link?url='.$url.'&service=tinyurl', false);
-            $fp = json_decode($fp, true);
+            $args = array(
+                'headers' => array(
+                    'User-Agent' => 'Mozilla/5.0 (X11; Linux x86_64; rv:58.0) Gecko/20100101 Firefox/58.0'
+                )
+            );
+            $fetchurl = 'https://www.shareaholic.com/v2/share/shorten_link?url='.$url.'&service=tinyurl';
+            $fp = wp_remote_get(esc_url_raw($fetchurl), $args);
+            // print_r($fp);
+            // $fp = file_get_contents ('https://www.shareaholic.com/v2/share/shorten_link?url='.$url.'&service=tinyurl', false);
+            $fp = json_decode( wp_remote_retrieve_body( $fp ), true );
             return $fp['data'];
             // return $fp;
+
+            // $response = wp_remote_get( $fetchurl);
+            // if ( ( !is_wp_error($response)) && (200 === wp_remote_retrieve_response_code( $response ) ) ) {
+            //     $responseBody = json_decode($response['body']);
+            //     if( json_last_error() === JSON_ERROR_NONE ) {
+            //         return $responseBody;
+            //     }
+            // }
         }
     }
 

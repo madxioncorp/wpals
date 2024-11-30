@@ -18,8 +18,8 @@ class Wpalstable
             if ( $column_name == 'shortened-link' ) {
                 $shortened = get_post_meta($post_id, '_wpals_meta_shorten');
                 if( array_key_exists(0, $shortened) ) {
-                    $shortened_esc = esc_html($shortened[0]);
-                    echo '<a href="'.$shortened_esc.'" target="_blank">'.$shortened_esc.'</a>';
+
+                    echo '<a href="'.esc_html($shortened[0]).'" target="_blank">'.esc_html($shortened[0]).'</a>';
                 }
                 
             }

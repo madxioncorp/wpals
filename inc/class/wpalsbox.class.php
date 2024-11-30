@@ -22,36 +22,45 @@ class Wpalsbox
 
     public static function custom_box_html( $post ) {
         $value = get_post_meta( $post->ID, '_wpals_meta_shorten', true );
-        $value = esc_html($value);
         ?>
         <label for="wpals_shortened">Description for this field</label>
-        <input type="text" name="wpals_shortened" class="components-text-control__input" value="<?php echo $value; ?>">
+        <input type="text" name="wpals_shortened" class="components-text-control__input" value="<?php echo esc_html($value); ?>">
         
         <?php
     }
 
     public static function save_postdata( $post_id ) {
         $url = site_url()."?p=".$post_id;
-        if( isset($_POST['wpals_shortened']) && $_POST['wpals_shortened'] == "" ) {
-            $shortener = get_option('wpals_shortener');
-            if( $shortener == "bitly" ) {
-                $shortened = Wpals::getBitly($url);
-            } else if ( $shortener == "tinyurl" ) {
-                $shortened = Wpals::tinyurl($url);
-            } else {
-                $shortened = esc_attr($_POST['wpals_shortened']);
-            }
+        $nonce = isset($_POST['_wpnonce']) ? esc_url_raw( wp_unslash($_POST['_wpnonce'])): false;
+
+        if ( FALSE != $nonce && ! wp_verify_nonce( $nonce ) ) {
+
+            die( 'Security check' ); 
+
         } else {
-            $shortened = "";
+
+            if( isset($_POST['wpals_shortened']) && $_POST['wpals_shortened'] == "" ) {
+                $shortener = get_option('wpals_shortener');
+                if( $shortener == "bitly" ) {
+                    $shortened = Wpals::getBitly($url);
+                } else if ( $shortener == "tinyurl" ) {
+                    $shortened = Wpals::tinyurl($url);
+                } else {
+                    $shortened = esc_url_raw(wp_unslash($_POST['wpals_shortened']));
+                }
+            } else {
+                $shortened = "";
+            }
+            
+            if ( array_key_exists( 'wpals_shortened', $_POST ) ) {
+                update_post_meta(
+                    $post_id,
+                    '_wpals_meta_shorten',
+                    $shortened
+                );
+            }
         }
         
-        if ( array_key_exists( 'wpals_shortened', $_POST ) ) {
-            update_post_meta(
-                $post_id,
-                '_wpals_meta_shorten',
-                $shortened
-            );
-        }
     }
 
 

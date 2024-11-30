@@ -45,7 +45,6 @@ if ( ! class_exists( 'Wpals' ) ) {
                 );
             register_setting('wpals_options', 'wpals_apikey', $args);
 
-
             $args = array(
                 'type' => 'string', 
                 'sanitize_callback' => 'sanitize_text_field',
@@ -69,7 +68,7 @@ if ( ! class_exists( 'Wpals' ) ) {
 
             add_settings_field(
                 'wpals_settings_field_apikey',
-                'API KEY (Bitly)', 'Wpals::apikey_callback',
+                'API KEY BITLY', 'Wpals::apikey_callback',
                 'wpals_options',
                 'wpals_settings_section'
             );
@@ -83,7 +82,7 @@ if ( ! class_exists( 'Wpals' ) ) {
         }
 
         public static function shortener_callback() {
-            $short = self::tinyurl("https://www.detik.com");
+            // $short = self::tinyurl("https://stackoverflow.com/questions/2138527/php-curl-and-http-post-example");
             // get the value of the setting we've registered with register_setting()
             $setting = get_option('wpals_shortener');
             // output the field
@@ -96,7 +95,7 @@ if ( ! class_exists( 'Wpals' ) ) {
                 <option value="tinyurl" <?php echo esc_attr( $tinyurl );?>>TinyURL</option>
             </select>
             <?php
-            print_r($short);
+            // print_r($short);
         }
 
         public static function apikey_callback() {
@@ -165,38 +164,45 @@ if ( ! class_exists( 'Wpals' ) ) {
         }
 
         public static function fetch ($url, $method, $arrval, $auth) {
+            $ch = curl_init();
 
-            // If the API is using a Bearer Token
-            $auth_scheme = 'Bearer';
-            $api_key     = esc_html($auth['token']);
-
-
-            $response = wp_remote_get( esc_url($url), array(
-                'headers' => array(
-                    'Accepts'       => 'application/json',
-                    'Authorization' => $auth_scheme . ' ' . $api_key
-                ),
-            ) );
-
-            if ( is_wp_error( $response ) ) {
-                return $response;
-            } else {
-                $body = wp_remote_retrieve_body( $response );
-                $data = json_decode( $body, true );
-                
-                return $data;
+            curl_setopt($ch, CURLOPT_URL,$url);
+            
+            if( $method == "POST" ) {
+                curl_setopt($ch, CURLOPT_POST, true);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, 
+                    wp_json_encode($arrval));
             }
+            
+            if( $auth['status'] == TRUE ) {
+                curl_setopt(
+                    $ch, 
+                    CURLOPT_HTTPHEADER, 
+                    array(
+                        'Content-Type: application/json', // for define content type that is json
+                        'Authorization: Bearer '.$auth['token']
+                    )
+                );
+            }
+            
 
+            // Receive server response ...
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+            $server_output = curl_exec($ch);
+
+            curl_close($ch);
+
+            return $server_output;
         }
 
         public static function getBitly ($longurl) {
 
             $apikey = get_option('wpals_apikey');
-            $group_guid = get_option('wpals_bitly_guid');
-
+            $bitly_guid = get_option('wpals_bitly_guid');
             $arrval = array(
                 'long_url' => $longurl,
-                'group_guid' => $group_guid, //'Bobg2vKrKPj'
+                'group_guid' => $bitly_guid,
                 'domain' => 'bit.ly'
             );
             $auth = array(
@@ -204,22 +210,18 @@ if ( ! class_exists( 'Wpals' ) ) {
                 'token' => $apikey
             );
             $req = self::fetch("https://api-ssl.bitly.com/v4/shorten", "POST", $arrval, $auth );
+            $res = json_decode($req, true);
 
-            return $req['link'];
+            return $res['link'];
 
         }
 
         public static function tinyurl($url) {
 
-            $fp = wp_remote_get (
-                esc_url_raw( 'https://www.shareaholic.com/v2/share/shorten_link?url='.$url.'&service=tinyurl'));
-            $body = wp_remote_retrieve_body( $fp );
-            // $data = json_decode( $fp, true );
-
-            print_r($body);
-
-            // return $data['data'];
-
+            $fp = file_get_contents ('https://www.shareaholic.com/v2/share/shorten_link?url='.$url.'&service=tinyurl', false);
+            $fp = json_decode($fp, true);
+            return $fp['data'];
+            // return $fp;
         }
     }
 
